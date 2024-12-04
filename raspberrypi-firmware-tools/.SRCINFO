@@ -1,0 +1,22 @@
+pkgbase = raspberrypi-firmware-tools
+	pkgdesc = Firmware tools, libraries, and headers for Raspberry Pi
+	pkgver = 20241204
+	pkgrel = 1
+	url = https://github.com/raspberrypi/firmware
+	arch = armv7h
+	arch = aarch64
+	license = custom
+	makedepends = cmake
+	provides = raspberrypi-firmware-tools
+	replaces = raspberrypi-firmware-tools
+	options = !strip
+	source = 00-raspberrypi-firmware.conf
+	source = 10-raspberrypi-firmware.rules
+	source = raspberrypi-firmware.sh
+	source = userland-20241204-1-96a7334ae9.tar.gz::https://github.com/raspberrypi/userland/archive/96a7334ae9d5fc9db7ac92e59852377df63f1848.tar.gz
+	md5sums = 72e0d5818fc513ece1b964f25f7e7882
+	md5sums = 4fd5a77d254c62a259edf8ff5194db6f
+	md5sums = 60919cb17f31b4698b6650bbb46f18ed
+	md5sums = ec1654258f8f12938068ac3c0c562783
+
+pkgname = raspberrypi-firmware-tools

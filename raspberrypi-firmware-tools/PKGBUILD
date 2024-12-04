@@ -1,0 +1,62 @@
+# Maintainer: Bkacjios <blackops7799 [at] gmail [dot] com>
+
+pkgname=raspberrypi-firmware-tools
+pkgver=20241204
+pkgrel=1
+_commituserland=96a7334ae9d5fc9db7ac92e59852377df63f1848
+pkgdesc="Firmware tools, libraries, and headers for Raspberry Pi"
+arch=('armv7h' 'aarch64')
+url="https://github.com/raspberrypi/firmware"
+license=('custom')
+makedepends=('cmake')
+replaces=('raspberrypi-firmware-tools')
+provides=('raspberrypi-firmware-tools')
+options=(!strip)
+source=('00-raspberrypi-firmware.conf'
+        '10-raspberrypi-firmware.rules'
+        'raspberrypi-firmware.sh'
+        "userland-$pkgver-$pkgrel-${_commituserland:0:10}.tar.gz::https://github.com/raspberrypi/userland/archive/$_commituserland.tar.gz")
+md5sums=('72e0d5818fc513ece1b964f25f7e7882'
+         '4fd5a77d254c62a259edf8ff5194db6f'
+         '60919cb17f31b4698b6650bbb46f18ed'
+         'ec1654258f8f12938068ac3c0c562783')
+
+build() {
+  cd "${srcdir}/userland-${_commituserland}"
+  if [[ "${CARCH}" = 'aarch64' ]]; then
+    cmake -DCMAKE_BUILD_TYPE=Release -DARM64=ON
+  else
+    cmake -DCMAKE_BUILD_TYPE=Release -DARM64=OFF
+  fi
+  make
+}
+
+package() {
+  # setup permissions on video group for /opt/vc/bin/vcgencmd
+  install -Dm0644 "$srcdir/10-raspberrypi-firmware.rules" "$pkgdir/usr/lib/udev/rules.d/10-raspberrypi-firmware.rules"
+
+  # setup PATH to hit /opt/vc/bin/
+  install -Dt "$pkgdir/etc/profile.d" -m644 raspberrypi-firmware.sh
+
+  mkdir -p "${pkgdir}"/opt/vc
+
+  cd ${srcdir}/userland-${_commituserland}
+  make install DESTDIR="${pkgdir}"
+  rm -rf "${pkgdir}"/opt/vc/src
+
+  # Remove executable flag on shared objects
+  find "${pkgdir}" -type f -name '*.so' -print0 | xargs -0 chmod -x
+
+  # Create lib links
+  mkdir -p "${pkgdir}"/etc/ld.so.conf.d/
+  install -m644 ../00-raspberrypi-firmware.conf "${pkgdir}"/etc/ld.so.conf.d/00-raspberrypi-firmware.conf
+
+  # Install man pages to /usr/share/man/ not to /opt/vc/man/
+  #
+  # These are provided by raspberrypi-utils, so don't bother
+  #
+  # mkdir -p "${pkgdir}"/usr/share/man/man{1,7}
+  # mv "${pkgdir}"/opt/vc/man/man1/*.1 "${pkgdir}"/usr/share/man/man1
+  # mv "${pkgdir}"/opt/vc/man/man7/*.7 "${pkgdir}"/usr/share/man/man7
+  # rm -rf "${pkgdir}"/opt/vc/man
+}
